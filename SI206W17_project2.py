@@ -80,9 +80,59 @@ def find_urls(string):
 ## End with this page: https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=11 
 
 def get_umsi_data():
+	baseurl = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All"
+	unique_identifier = "umsi_directory_data"
+	params_dict  = {}
+	headers = {}
+	headers["User-Agent"] = "SI_CLASS"
+	html_list = []
+	if unique_identifier in CACHE_DICTION:
+		print('using cached data')
+		html_list = CACHE_DICTION[unique_identifier] # grab the data from the cache!
+	else:
+		print('getting data from umsi website') # get it from the internet
+		page_num = 0
+		while page_num <= 11:
+			params_dict["page"] = str(page_num)
+			html_text = requests.get(baseurl, params = params_dict, headers = headers)
+			html_list.append(html_text.text)
+			print(html_text)
+			print(html_text.url)
+			page_num += 1
+		# but also, save in the dictionary to cache it!
+		CACHE_DICTION[unique_identifier] = html_list # add it to the dictionary -- new key-val pair
+		# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
+		cache_file = open(CACHE_FNAME,'w') # open the cache file for writing
+		cache_file.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
+		cache_file.close()
+	return html_list
 
-	phrase = input("Enter a phrase to search on Twitter: ")
-	unique_identifier = "twitter_{}".format(phrase) # seestring formatting chapter
+## PART 2 (b) - Create a dictionary saved in a variable umsi_titles 
+## whose keys are UMSI people's names, and whose associated values are those people's titles, e.g. "PhD student" or "Associate Professor of Information"...
+
+umsi_data = get_umsi_data()
+umsi_titles = {}
+list_names = []
+list_titles = []
+for htmlpage in umsi_data:
+	soup = BeautifulSoup(htmlpage,"html.parser")
+	for name in soup.find_all(class_ = "field field-name-title field-type-ds field-label-hidden"):
+		list_names.append(name.text)
+	for title in soup.find_all(class_ = "field field-name-field-person-titles field-type-text field-label-hidden"):
+		list_titles.append(title.text)
+i = 0
+for item in range(len(list_names)):
+	umsi_titles[list_names[i]] = list_titles[i]
+	i += 1 
+
+## PART 3 (a) - Define a function get_five_tweets
+## INPUT: Any string
+## Behavior: See instructions. Should search for the input string on twitter and get results. Should check for cached data, use it if possible, and if not, cache the data retrieved.
+## RETURN VALUE: A list of strings: A list of just the text of 5 different tweets that result from the search.
+
+def get_five_tweets(phrase):
+	tweet_phrases = []
+	unique_identifier = "twitter_University of Michigan" # see string formatting chapter
 	# see if that username+twitter is in the cache diction!
 	if unique_identifier in CACHE_DICTION: 
 		print('using cached data for', phrase)
@@ -93,40 +143,25 @@ def get_umsi_data():
 		# but also, save in the dictionary to cache it!
 		CACHE_DICTION[unique_identifier] = twitter_results # add it to the dictionary -- new key-val pair
 		# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
-		f = open(CACHE_FNAME,'w') # open the cache file for writing
-		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
-		f.close()
-
-
-
-
-## PART 2 (b) - Create a dictionary saved in a variable umsi_titles 
-## whose keys are UMSI people's names, and whose associated values are those people's titles, e.g. "PhD student" or "Associate Professor of Information"...
-
-
-
-
-
-
-
-## PART 3 (a) - Define a function get_five_tweets
-## INPUT: Any string
-## Behavior: See instructions. Should search for the input string on twitter and get results. Should check for cached data, use it if possible, and if not, cache the data retrieved.
-## RETURN VALUE: A list of strings: A list of just the text of 5 different tweets that result from the search.
-
-
+		cache_file = open(CACHE_FNAME,'w') # open the cache file for writing
+		cache_file.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
+		cache_file.close()
+	for tweet in twitter_results["statuses"]:
+		tweet_phrases.append(tweet["text"])
+	return tweet_phrases[:5]
 
 
 ## PART 3 (b) - Write one line of code to invoke the get_five_tweets function with the phrase "University of Michigan" and save the result in a variable five_tweets.
 
-
-
+five_tweets = get_five_tweets("University of Michigan") # returns a list text of 5 tweets with U of M search
 
 ## PART 3 (c) - Iterate over the five_tweets list, invoke the find_urls function that you defined in Part 1 on each element of the list, and accumulate a new list of each of the total URLs in all five of those tweets in a variable called tweet_urls_found. 
-
-
-
-
+tweet_urls_found = []
+for tweet in five_tweets:
+	url = find_urls(tweet)
+	if len(url) != 0:
+		for link in url:
+			tweet_urls_found.append(link)
 
 ########### TESTS; DO NOT CHANGE ANY CODE BELOW THIS LINE! ###########
 
