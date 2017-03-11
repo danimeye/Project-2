@@ -90,18 +90,18 @@ def get_umsi_data():
 		print('using cached data')
 		html_list = CACHE_DICTION[unique_identifier] # grab the data from the cache!
 	else:
-		print('getting data from umsi website') # get it from the internet
+		print('getting data from umsi website')
 		page_num = 0
 		while page_num <= 11:
 			params_dict["page"] = str(page_num)
-			html_text = requests.get(baseurl, params = params_dict, headers = headers)
+			html_text = requests.get(baseurl, params = params_dict, headers = headers) # get it from the internet
 			html_list.append(html_text.text)
 			print(html_text)
 			print(html_text.url)
 			page_num += 1
 		# but also, save in the dictionary to cache it!
 		CACHE_DICTION[unique_identifier] = html_list # add it to the dictionary -- new key-val pair
-		# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
+		# and then write the whole cache dictionary, with new info added to the cache file
 		cache_file = open(CACHE_FNAME,'w') # open the cache file for writing
 		cache_file.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
 		cache_file.close()
@@ -132,8 +132,7 @@ for item in range(len(list_names)):
 
 def get_five_tweets(phrase):
 	tweet_phrases = []
-	unique_identifier = "twitter_University of Michigan" # see string formatting chapter
-	# see if that username+twitter is in the cache diction!
+	unique_identifier = "twitter_University of Michigan" 
 	if unique_identifier in CACHE_DICTION: 
 		print('using cached data for', phrase)
 		twitter_results = CACHE_DICTION[unique_identifier] # grab the data from the cache!
@@ -142,7 +141,7 @@ def get_five_tweets(phrase):
 		twitter_results = api.search(q = phrase) # get it from the internet
 		# but also, save in the dictionary to cache it!
 		CACHE_DICTION[unique_identifier] = twitter_results # add it to the dictionary -- new key-val pair
-		# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
+		# and then write the whole cache dictionary, with new info added to the cache file
 		cache_file = open(CACHE_FNAME,'w') # open the cache file for writing
 		cache_file.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
 		cache_file.close()
